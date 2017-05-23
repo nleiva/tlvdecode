@@ -2,11 +2,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
-	//"github.com/Akagi201/tlv"
+
+	"github.com/nleiva/tlv"
 )
 
 const encodeStd = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -21,7 +23,7 @@ func main() {
 	fileb64 := "data64"
 	var enc = base64.NewEncoding(encodeStd)
 
-	// Read the the whole file at once and pute it an a byte array
+	// Read the the whole file at once and put it an a byte array
 	src, err := ioutil.ReadFile(fileb64)
 	check(err, "Error opening file")
 
@@ -29,19 +31,31 @@ func main() {
 	n, err := enc.Decode(dst, src)
 	check(err, "Error decoding file")
 
-	fmt.Printf("Lenght: %v\n", n)
+	fmt.Printf("===== LSP Details (lenght: %v) ====\n", n)
 
 	fmt.Printf("LSPID: %X\n", dst[:10])
 	fmt.Printf("Seq Num: %#x\n", dst[10:12])
 	fmt.Printf("Checksum: %#x\n", dst[12:14])
 	fmt.Printf("Type Block: %#x\n", dst[14:15])
-	fmt.Printf("T10,  L17: %#x\n", dst[15:34])
-	fmt.Printf("T01,  L06: %#x\n", dst[34:42])
-	fmt.Printf("T129, L01: %#x\n", dst[42:45])
-	fmt.Printf("T229, L02: %#x\n", dst[45:49])
-	fmt.Printf("T137, L22: %#x, %s\n", dst[49:51], dst[51:73])
-	fmt.Printf("T232, L16: %#x\n", dst[73:91])
-	fmt.Printf("T222, L13: %#x\n", dst[91:106])
-	fmt.Printf("T237, L118: %#x\n", dst[106:n])
 
+	// Read individual TLV from byte array
+	//tmpTLV, err := tlv.FromBytes(dst[15:n])
+	//check(err, "Failed to read TLV")
+	//fmt.Printf("T%v,  L%v: %#x\n", tmpTLV.Type(), tmpTLV.Length(), tmpTLV.Value())
+
+	// Get a io.Reader from a []byte slice
+	r := bytes.NewReader(dst[15:n])
+
+	// Read the TLV's from the Reader and put them on a slice
+	rtlvs, err := tlv.Read(r)
+	check(err, "Failed to read TLVs")
+	ts := rtlvs.GetThemAll()
+
+	fmt.Printf("===== TLV Details (total: %03d) ====\n", rtlvs.Length())
+	for _, tl := range ts {
+		fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
+	}
+
+	// Manual way to look at TLV's
+	//fmt.Printf("TLV: %#x, %s\n", dst[49:51], dst[51:73])
 }
