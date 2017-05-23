@@ -33,29 +33,22 @@ func main() {
 
 	fmt.Printf("===== LSP Details (lenght: %v) ====\n", n)
 
-	fmt.Printf("LSPID: %X\n", dst[:10])
-	fmt.Printf("Seq Num: %#x\n", dst[10:12])
-	fmt.Printf("Checksum: %#x\n", dst[12:14])
+	fmt.Printf("LSPID:      %X.%X.%X.%X-%X\n", dst[0:2], dst[2:4], dst[4:6], dst[6:8], dst[8:10])
+	fmt.Printf("Seq Num:    %#x\n", dst[10:12])
+	fmt.Printf("Checksum:   %#x\n", dst[12:14])
 	fmt.Printf("Type Block: %#x\n", dst[14:15])
-
-	// Read individual TLV from byte array
-	//tmpTLV, err := tlv.FromBytes(dst[15:n])
-	//check(err, "Failed to read TLV")
-	//fmt.Printf("T%v,  L%v: %#x\n", tmpTLV.Type(), tmpTLV.Length(), tmpTLV.Value())
 
 	// Get a io.Reader from a []byte slice
 	r := bytes.NewReader(dst[15:n])
 
 	// Read the TLV's from the Reader and put them on a slice
-	rtlvs, err := tlv.Read(r)
+	tlvs, err := tlv.Read(r)
 	check(err, "Failed to read TLVs")
-	ts := rtlvs.GetThemAll()
+	ts := tlvs.GetThemAll()
 
-	fmt.Printf("===== TLV Details (total: %03d) ====\n", rtlvs.Length())
+	fmt.Printf("===== TLV Details (total: %03d) ====\n", tlvs.Length())
 	for _, tl := range ts {
 		fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
 	}
 
-	// Manual way to look at TLV's
-	//fmt.Printf("TLV: %#x, %s\n", dst[49:51], dst[51:73])
 }
