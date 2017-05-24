@@ -52,7 +52,7 @@ Identifies the symbolic name of the router originating the link-state packet (LS
 It contains one or more MTs the router is participating.
 
 ```console
-										  No. of Octets
+										No. of Octets
 	  +--------------------------------+
 	  |O |A |R |R |        MT ID       |      2
 	  +--------------------------------+
@@ -107,7 +107,7 @@ The "IPv6 Reachability" TLV describes network reachability through the specifica
 It is aligned with IPv6 Reachability TLV type 236 beside an additional two bytes in front
 
 ```console
-										 No. of Octets
+                                       No. of Octets
 	 +--------------------------------+
 	 |R |R |R |R |        MT ID       |      2
 	 +--------------------------------+
