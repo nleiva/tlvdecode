@@ -9,7 +9,7 @@ Decode IS-IS base64 encoded TLV's
 
 ```console
 $ ./tlvdecode 
-===== LSP Details (lenght: 226) ====
+===== LSP Details (lenght: 228) ====
 LSPID:      0151.0250.0002.0000-0000
 Seq Num:    0x000d
 Checksum:   0x6f49
@@ -22,7 +22,14 @@ Type229,  L002: 0x0002
 Type137,  L022: mrstn-5502-2.cisco.com
 Type232,  L016: 2001:558:2::2
 Type222,  L013: 0x00020151025000010000000a00
-Type237,  L118:
+Type237,  L118: MT ID: IPv6
+Prefixes:
+2001:558:2::2/128, Metric:1
+2001:f00:ba::/64, Metric:10
+2001:f00:bb::/64, Metric:10
+2001:f00:bc::/64, Metric:10
+2001:f00:bd::/64, Metric:65000
+2001:f00:be::/64, Metric:65000
 ```
 
 ## IS-IS Theory
@@ -55,7 +62,21 @@ It contains one or more MTs the router is participating.
   +--------------------------------+
   |O |A |R |R |        MT ID       |      2
   +--------------------------------+
+
+Bit O represents the OVERLOAD bit for the MT
+Bit A represents the ATTACH bit for the MT
+Bits R are reserved
 ```
+
+#### Reserved MT ID Values
+
+-  MT ID #0: Equivalent to the "standard" topology.
+-  MT ID #1: Reserved for IPv4 in-band management purposes.
+-  MT ID #2: Reserved for IPv6 routing topology.
+-  MT ID #3: Reserved for IPv4 multicast routing topology.
+-  MT ID #4: Reserved for IPv6 multicast routing topology.
+-  MT ID #5: Reserved for IPv6 in-band management purposes.
+-  MT ID #6-#4095: Reserved.
 
 ### TLV 232 (IPv6 Interface Address)
 
@@ -120,7 +141,7 @@ It is aligned with IPv6 Reachability TLV type 236 beside an additional two bytes
 
 This sub-TLV supports the advertisement of additional flags associated with a given prefix advertisement
 
-```console
+```
    0 1 2 3 4 5 6 7...
   +-+-+-+-+-+-+-+-+...
   |X|R|N|          ...
