@@ -1,9 +1,9 @@
 # Decoding IS-IS Link State PDUs (LSP)
 
-Decode IS-IS base64 encoded TLV's
+From [Package json](https://golang.org/pkg/encoding/json/) we learn _array and slice values encode as JSON arrays_, however _[]byte encodes as a **base64-encoded** string_. Therefore you might end up with a base64-encoded output on your JSON outputs. That was our case when reading IS-IS PDU's, therefore we used this code to translate it to a human readable format.
 
 
-## Code Examples
+## Use
 
 `tlvdecode` reads from a base64 encoded [file](data64) and outputs the LSP details
 
