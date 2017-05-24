@@ -9,7 +9,7 @@ Decode IS-IS base64 encoded TLV's
 
 ```console
 $ ./tlvdecode 
-===== LSP Details (lenght: 228) ====
+===== LSP Details (lenght: 226) ====
 LSPID:      0151.0250.0002.0000-0000
 Seq Num:    0x000d
 Checksum:   0x6f49

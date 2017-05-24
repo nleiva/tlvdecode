@@ -76,11 +76,11 @@ func readPrefix(buf *bytes.Reader) (err error) {
 	return err
 }
 
-func readHeader(h []byte) (buf *bytes.Reader, err error) {
+func readHeader(h []byte, n int) (buf *bytes.Reader, err error) {
 	if len(h) < 15 {
 		return buf, fmt.Errorf("Not a valid Header, lenght: %v", len(h))
 	}
-	fmt.Printf("===== LSP Details (lenght: %v) ====\n", len(h))
+	fmt.Printf("===== LSP Details (lenght: %v) ====\n", n)
 	fmt.Printf("LSPID:      %X.%X.%X.%X-%X\n", h[0:2], h[2:4], h[4:6], h[6:8], h[8:10])
 	fmt.Printf("Seq Num:    %#x\n", h[10:12])
 	fmt.Printf("Checksum:   %#x\n", h[12:14])
@@ -100,11 +100,11 @@ func main() {
 	check(err, "Error opening file")
 
 	dst := make([]byte, enc.DecodedLen(len(src)))
-	_, err = enc.Decode(dst, src)
+	n, err := enc.Decode(dst, src)
 	check(err, "Error decoding file")
 
 	// Read Header
-	r, err := readHeader(dst)
+	r, err := readHeader(dst, n)
 	check(err, "Error reading header")
 
 	// Read the TLV's from the Reader and put them on a slice
