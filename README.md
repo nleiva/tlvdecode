@@ -52,9 +52,9 @@ Identifies the symbolic name of the router originating the link-state packet (LS
 It contains one or more MTs the router is participating.
 
 ```
-	  +--------------------------------+
-	  |O |A |R |R |        MT ID       |      2
-	  +--------------------------------+
+  +--------------------------------+
+  |O |A |R |R |        MT ID       |      2
+  +--------------------------------+
 ```
 
 ### TLV 232 (IPv6 Interface Address)
@@ -105,15 +105,15 @@ The "IPv6 Reachability" TLV describes network reachability through the specifica
 It is aligned with IPv6 Reachability TLV type 236 beside an additional two bytes in front
 
 ```
-	 +--------------------------------+
-	 |R |R |R |R |        MT ID       |      2
-	 +--------------------------------+
-	 | IPv6 Reachability format       |    6 - 253
-	 +--------------------------------+
-	 .                                .
-	 +--------------------------------+
-	 | IPv6 Reachability format       |    6 - 253
-	 +--------------------------------+
+  +--------------------------------+
+  |R |R |R |R |        MT ID       |      2
+  +--------------------------------+
+  | IPv6 Reachability format       |    6 - 253
+  +--------------------------------+
+  .                                .
+  +--------------------------------+
+  | IPv6 Reachability format       |    6 - 253
+  +--------------------------------+
 ```
 
 ### IPv4/IPv6 Extended Reachability Attribute Flags
