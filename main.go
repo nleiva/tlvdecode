@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 
 	"github.com/nleiva/tlv"
 )
@@ -48,7 +49,18 @@ func main() {
 
 	fmt.Printf("===== TLV Details (total: %03d) ====\n", tlvs.Length())
 	for _, tl := range ts {
-		fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
+		switch tl.Type() {
+		case 1:
+			fmt.Printf("Type%03d,  L%03d: %x.%x.%x\n", tl.Type(), tl.Length(), tl.Value()[1:2], tl.Value()[2:4], tl.Value()[4:6])
+		case 137:
+			fmt.Printf("Type%03d,  L%03d: %s\n", tl.Type(), tl.Length(), tl.Value())
+		case 232:
+			fmt.Printf("Type%03d,  L%03d: %v\n", tl.Type(), tl.Length(), net.IP(tl.Value()))
+		case 237:
+			fmt.Printf("Type%03d,  L%03d:\n", tl.Type(), tl.Length())
+		default:
+			fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
+		}
 	}
 
 }

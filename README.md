@@ -3,7 +3,7 @@ Decode IS-IS base64 encoded TLV's
 
 ## Code Examples
 
-`tlvdecode` reads from a base64 encoded file and outputs the LSP details
+`tlvdecode` reads from a base64 encoded [file](data64) and outputs the LSP details
 
 ```console
 $ ./tlvdecode 
