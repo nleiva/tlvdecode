@@ -1,4 +1,4 @@
-# Decoding IS-IS Link State PDU (LSP)
+# Decoding IS-IS Link State PDUs (LSP)
 
 Decode IS-IS base64 encoded TLV's
 
@@ -51,19 +51,17 @@ Identifies the symbolic name of the router originating the link-state packet (LS
 
 It contains one or more MTs the router is participating.
 
-```console
-										No. of Octets
+```
 	  +--------------------------------+
 	  |O |A |R |R |        MT ID       |      2
 	  +--------------------------------+
-
 ```
 
 ### TLV 232 (IPv6 Interface Address)
 
 Maps directly to "IP Interface Address" TLV in [RFC1195](https://tools.ietf.org/html/rfc1195).
 
-```console
+```
    0                   1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -84,7 +82,7 @@ Maps directly to "IP Interface Address" TLV in [RFC1195](https://tools.ietf.org/
 
 The "IPv6 Reachability" TLV describes network reachability through the specification of a routing prefix, metric information, a bit to indicate if the prefix is being advertised down from a higher level, a bit to indicate if the prefix is being distributed from another routing protocol, and OPTIONALLY the existence of Sub-TLVs to allow for later extension
 
-```console
+```
    0                   1                   2                   3
    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -106,8 +104,7 @@ The "IPv6 Reachability" TLV describes network reachability through the specifica
 
 It is aligned with IPv6 Reachability TLV type 236 beside an additional two bytes in front
 
-```console
-                                       No. of Octets
+```
 	 +--------------------------------+
 	 |R |R |R |R |        MT ID       |      2
 	 +--------------------------------+
@@ -138,5 +135,5 @@ N-flag:  Node Flag (Bit 2)
 ## Links
 
 - [Intermediate System-to-Intermediate System (IS-IS) TLVs](http://www.cisco.com/c/en/us/support/docs/ip/integrated-intermediate-system-to-intermediate-system-is-is/5739-tlvs-5739.html)
-- [https://www.iana.org/assignments/isis-tlv-codepoints/isis-tlv-codepoints.xhtml](IS-IS TLV Codepoints)
+- [IS-IS TLV Codepoints](https://www.iana.org/assignments/isis-tlv-codepoints/isis-tlv-codepoints.xhtml)
 - [Routing IPv6 with IS-IS](https://tools.ietf.org/html/rfc5308)
