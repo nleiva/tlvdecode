@@ -21,13 +21,54 @@ func check(err error, msg string) {
 	}
 }
 
+func read222(t []byte) (mtid string, err error) {
+	if len(t) < 13 {
+		return mtid, fmt.Errorf("Not a valid TLV, lenght: %v", len(t))
+	}
+	var mt uint16
+	var subtlv uint8
+	var nsel uint8
+	s := make([]byte, 6)
+	m := make([]byte, 3)
+
+	buf := bytes.NewReader(t)
+	err = binary.Read(buf, binary.BigEndian, &mt)
+	check(err, "Failed to read MT ID: ")
+	err = binary.Read(buf, binary.BigEndian, &s)
+	check(err, "Failed to read System ID: ")
+	err = binary.Read(buf, binary.BigEndian, &nsel)
+	check(err, "Failed to read NSAP selector: ")
+	err = binary.Read(buf, binary.BigEndian, &m)
+	check(err, "Failed to read Metric: ")
+	err = binary.Read(buf, binary.BigEndian, &subtlv)
+	check(err, "Failed to read subTLV: ")
+
+	switch mt {
+	case 2:
+		mtid = "IPv6 Unicast"
+	default:
+		mtid = "Unknown"
+	}
+	// Metric has three bytes
+	metric := uint32(m[0])*65536 + uint32(m[1])*256 + uint32(m[2])
+	// Format the System ID
+	sysid := fmt.Sprintf("%x", (s[0:2])) + "." + fmt.Sprintf("%x", (s[2:4])) + "." + fmt.Sprintf("%x", (s[4:6]))
+
+	// This is just temporary
+	fmt.Printf("Neighbor System ID: %v.%02d, Metric: %v\n", sysid, nsel, metric)
+	if subtlv != 0 {
+		return mtid, fmt.Errorf("Missed a subTLV")
+	}
+	return mtid, err
+}
+
 func read237(t []byte) (mtid string, err error) {
 	if len(t) < 2 {
 		return mtid, fmt.Errorf("Not a valid TLV, lenght: %v", len(t))
 	}
 	switch binary.BigEndian.Uint16(t[0:2]) {
 	case 2:
-		mtid = "IPv6"
+		mtid = "IPv6 Unicast"
 	default:
 		mtid = "Unknown"
 	}
@@ -119,12 +160,16 @@ func main() {
 			fmt.Printf("Type%03d,  L%03d: %x.%x.%x\n", tl.Type(), tl.Length(), tl.Value()[1:2], tl.Value()[2:4], tl.Value()[4:6])
 		case 137:
 			fmt.Printf("Type%03d,  L%03d: %s\n", tl.Type(), tl.Length(), tl.Value())
+		case 222:
+			fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
+			_, err := read222(tl.Value()[:tl.Length()])
+			check(err, "Failed to read TLV 222: ")
 		case 232:
 			fmt.Printf("Type%03d,  L%03d: %v\n", tl.Type(), tl.Length(), net.IP(tl.Value()))
 		case 237:
 			fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
 			_, err := read237(tl.Value()[:tl.Length()])
-			check(err, "Failed to read TLV237: ")
+			check(err, "Failed to read TLV 237: ")
 		default:
 			fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
 		}

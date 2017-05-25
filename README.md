@@ -21,8 +21,8 @@ Type129,  L001: 0x8e
 Type229,  L002: 0x0002
 Type137,  L022: mrstn-5502-2.cisco.com
 Type232,  L016: 2001:558:2::2
-Type222,  L013: 0x00020151025000010000000a00
-Type237,  L118: MT ID: IPv6
+Type222,  L013: Neighbor System ID: 0151.0250.0001.00, Metric: 10
+Type237,  L118: MT ID: IPv6 Unicast
 Prefixes:
 2001:558:2::2/128, Metric:1
 2001:f00:ba::/64, Metric:10
@@ -45,7 +45,7 @@ The information that is used to authenticate the PDU.
 
 ### TLV 22 (Extended IS Reachability)
 
-The original IS reachability (TLV type 2, defined in (ISO 10589)[https://www.iso.org/standard/30932.html]) contains information about a series of IS neighbors. The extended IS reachability TLV proposed on [RFC 3784](https://tools.ietf.org/html/rfc3784) contains a new data structure, consisting of:
+The original IS reachability (TLV type 2, defined in [ISO 10589](https://www.iso.org/standard/30932.html) contains information about a series of IS neighbors. The extended IS reachability TLV proposed on [RFC 3784](https://tools.ietf.org/html/rfc3784) contains a new data structure, consisting of:
 
 ```
 7 octets of system Id and pseudonode number
@@ -69,7 +69,7 @@ Carries the Network Layer Protocol Identifiers (NLPID) for Network Layer protoco
 
 Identifies the symbolic name of the router originating the Link State PDU.
 
-### TLV 222 (MT Intermediate Systems TLV)
+### TLV 222 (MT Intermediate Systems)
 
 It is aligned with extended IS reachability TLV type 22 beside an additional two bytes in front at the beginning of the TLV. After the 2-byte MT membership format, the MT IS content is in the same format as extended IS TLV, type 22
 
@@ -153,7 +153,7 @@ The "IPv6 Reachability" TLV describes network reachability through the specifica
    S - subtlv present bit
 ```
 
-### TLV 237 (Multi-Topology Reachable IPv6 Prefixes TLV)
+### TLV 237 (Multi-Topology Reachable IPv6 Prefixes)
 
 It is aligned with IPv6 Reachability TLV type 236 beside an additional two bytes in front
 
@@ -182,6 +182,22 @@ This sub-TLV supports the advertisement of additional flags associated with a gi
 X-Flag:  External Prefix Flag (Bit 0)
 R-Flag:  Re-advertisement Flag (Bit 1)
 N-flag:  Node Flag (Bit 2)
+```
+
+### OSI Sytem ID in IOS XR 
+
+Described as a string in [Cisco-IOS-XR-types](https://github.com/YangModels/yang/blob/master/vendor/cisco/xr/621/Cisco-IOS-XR-types.yang#L261)
+
+```
+  typedef Osi-area-address {
+    type string {
+      pattern '[a-fA-F0-9]{2}(\.[a-fA-F0-9]{4}){0,6}';
+    }
+    description "An OSI area address should consist of an odd number
+                 of octets, and be of the form 01 or 01.2345 etc up
+                 to 01.2345.6789.abcd.ef01.2345.6789. This data type
+                 restricts each character to a hex character.";
+  }
 ```
 
 
