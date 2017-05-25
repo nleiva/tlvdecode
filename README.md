@@ -43,6 +43,21 @@ Includes the Area Addresses to which the Intermediate System is connected.
 
 The information that is used to authenticate the PDU.
 
+### TLV 22 (Extended IS Reachability)
+
+The original IS reachability (TLV type 2, defined in (ISO 10589)[https://www.iso.org/standard/30932.html]) contains information about a series of IS neighbors. The extended IS reachability TLV proposed on [RFC 3784](https://tools.ietf.org/html/rfc3784) contains a new data structure, consisting of:
+
+```
+7 octets of system Id and pseudonode number
+3 octets of default metric
+1 octet of length of sub-TLVs
+0-244 octets of sub-TLVs,
+   where each sub-TLV consists of a sequence of
+		1 octet of sub-type
+		1 octet of length of the value field of the sub-TLV
+		0-242 octets of value
+```
+
 ### TLV 129 (Protocols Supported)
 
 Carries the Network Layer Protocol Identifiers (NLPID) for Network Layer protocols that the IS (Intermediate System) is capable. It refers to the Data Protocols that are supported. 
@@ -52,7 +67,24 @@ Carries the Network Layer Protocol Identifiers (NLPID) for Network Layer protoco
 
 ### TLV 137 (Dynamic Hostname)
 
-Identifies the symbolic name of the router originating the link-state packet (LSP).
+Identifies the symbolic name of the router originating the Link State PDU.
+
+### TLV 222 (MT Intermediate Systems TLV)
+
+It is aligned with extended IS reachability TLV type 22 beside an additional two bytes in front at the beginning of the TLV. After the 2-byte MT membership format, the MT IS content is in the same format as extended IS TLV, type 22
+
+```
+ +--------------------------------+
+ |R |R |R |R |        MT ID       |      2
+ +--------------------------------+
+ | extended IS TLV format         |    11 - 253
+ +--------------------------------+
+ .                                .
+ .                                .
+ +--------------------------------+
+ | extended IS TLV format         |    11 - 253
+ +--------------------------------+
+```
 
 ### TLV 229 (Multi-Topology)
 
