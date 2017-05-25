@@ -2,13 +2,14 @@
 
 From [Package json](https://golang.org/pkg/encoding/json/) we learn _array and slice values encode as JSON arrays_, however _[]byte encodes as a **base64-encoded** string_. Therefore you might end up with a base64-encoded string in your JSON outputs. That was our case when reading IS-IS PDU's, therefore we used this code to translate it to a human readable format.
 
+Disclaimer: At this point in time, it does not cover all the exiting TLV's, just those we found in out networ k. We will keep adding more on-demand.
 
 ## Use
 
 `tlvdecode` reads from a base64 encoded [file](data64) and outputs the LSP details
 
 ```console
-$ ./tlvdecode 
+$ ./tlvdecode data64 
 ===== LSP Details (lenght: 226) ====
 LSPID:      0151.0250.0002.0000-0000
 Seq Num:    0x000d

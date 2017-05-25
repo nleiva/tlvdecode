@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
 
 	"github.com/nleiva/tlv"
 )
@@ -133,18 +134,18 @@ func readHeader(h []byte, n int) (buf *bytes.Reader, err error) {
 }
 
 func main() {
-	fileb64 := "data64"
 	var enc = base64.NewEncoding(encodeStd)
 
 	// Read the the whole file at once and put it an a byte array
-	src, err := ioutil.ReadFile(fileb64)
+	src, err := ioutil.ReadFile(os.Args[1])
 	check(err, "Error opening file")
 
+	// Decode base64 data into bytes
 	dst := make([]byte, enc.DecodedLen(len(src)))
 	n, err := enc.Decode(dst, src)
 	check(err, "Error decoding file")
 
-	// Read Header
+	// Read PDU info
 	r, err := readHeader(dst, n)
 	check(err, "Error reading header")
 
@@ -153,6 +154,7 @@ func main() {
 	check(err, "Failed to read TLVs: ")
 	ts := tlvs.GetThemAll()
 
+	// Print the TLV details
 	fmt.Printf("===== TLV Details (total: %03d) ====\n", tlvs.Length())
 	for _, tl := range ts {
 		switch tl.Type() {
