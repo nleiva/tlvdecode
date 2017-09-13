@@ -70,6 +70,10 @@ Carries the Network Layer Protocol Identifiers (NLPID) for Network Layer protoco
 
 Identifies the symbolic name of the router originating the Link State PDU.
 
+### TLV 140 (IPv6 TE Router ID)
+
+The IPv6 TE Router ID TLV contains a 16-octet IPv6 address. A stable global IPv6 address MUST be used, so that the router ID provides a routable address, regardless of the state of a node's interfaces.
+
 ### TLV 222 (MT Intermediate Systems)
 
 It is aligned with extended IS reachability TLV type 22 beside an additional two bytes in front at the beginning of the TLV. After the 2-byte MT membership format, the MT IS content is in the same format as extended IS TLV, type 22
@@ -206,4 +210,6 @@ Described as a string in [Cisco-IOS-XR-types](https://github.com/YangModels/yang
 
 - [Intermediate System-to-Intermediate System (IS-IS) TLVs](http://www.cisco.com/c/en/us/support/docs/ip/integrated-intermediate-system-to-intermediate-system-is-is/5739-tlvs-5739.html)
 - [IS-IS TLV Codepoints](https://www.iana.org/assignments/isis-tlv-codepoints/isis-tlv-codepoints.xhtml)
-- [Routing IPv6 with IS-IS](https://tools.ietf.org/html/rfc5308)
+- RFC 5120: [Multi Topology (MT) Routing in IS-ISs](https://tools.ietf.org/html/rfc5120)
+- RFC 5308: [Routing IPv6 with IS-IS](https://tools.ietf.org/html/rfc5308)
+- RFC 6119: [IPv6 Traffic Engineering in IS-IS](https://tools.ietf.org/html/rfc6119)
