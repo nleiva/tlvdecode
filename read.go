@@ -2,14 +2,49 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
+	"os"
+
+	"github.com/nleiva/tlv"
+	"github.com/pkg/errors"
 )
+
+func readBytes(src []byte) error {
+	// Decode base64 data into bytes
+	var enc = base64.NewEncoding(encodeStd)
+	dst := make([]byte, enc.DecodedLen(len(src)))
+	n, err := enc.Decode(dst, src)
+	if err != nil {
+		return errors.Wrap(err, "error decoding file")
+	}
+	// Read PDU info
+	r, err := readHeader(dst, n)
+	if err != nil {
+		return errors.Wrap(err, "error reading header")
+	}
+	// DEBUG
+	// fmt.Printf("%X", r)
+	// Read the TLV's from the Reader and put them on a slice
+	tlvs, err := tlv.Read(r)
+	if err != nil {
+		return errors.Wrap(err, "failed to read TLVs: ")
+	}
+	// Print the TLV details
+	fmt.Printf("===== TLV Details (total: %03d) ====\n", tlvs.Length())
+	err = exploreTLV(tlvs.GetThemAll())
+	if err != nil {
+		return errors.Wrap(err, "failed to read TLV details: ")
+	}
+	return nil
+}
 
 func read222(t []byte) (mtid string, err error) {
 	if len(t) < 13 {
-		return mtid, fmt.Errorf("Not a valid TLV, lenght: %v", len(t))
+		return mtid, fmt.Errorf("not a valid TLV, lenght: %v", len(t))
 	}
 	var mt uint16
 	var subtlv uint8
@@ -19,15 +54,15 @@ func read222(t []byte) (mtid string, err error) {
 
 	buf := bytes.NewReader(t)
 	err = binary.Read(buf, binary.BigEndian, &mt)
-	check(err, "Failed to read MT ID: ")
+	check(err, "failed to read MT ID: ")
 	err = binary.Read(buf, binary.BigEndian, &s)
-	check(err, "Failed to read System ID: ")
+	check(err, "failed to read System ID: ")
 	err = binary.Read(buf, binary.BigEndian, &nsel)
-	check(err, "Failed to read NSAP selector: ")
+	check(err, "failed to read NSAP selector: ")
 	err = binary.Read(buf, binary.BigEndian, &m)
-	check(err, "Failed to read Metric: ")
+	check(err, "failed to read Metric: ")
 	err = binary.Read(buf, binary.BigEndian, &subtlv)
-	check(err, "Failed to read subTLV: ")
+	check(err, "failed to read subTLV: ")
 
 	switch mt {
 	case 2:
@@ -43,14 +78,15 @@ func read222(t []byte) (mtid string, err error) {
 	// This is just temporary
 	fmt.Printf("Neighbor System ID: %v.%02d, Metric: %v\n", sysid, nsel, metric)
 	if subtlv != 0 {
-		return mtid, fmt.Errorf("Missed a subTLV")
+		// TODO Process the sub-TLV
+		// return mtid, fmt.Errorf("missed a subTLV")
 	}
 	return mtid, err
 }
 
 func read237(t []byte) (mtid string, err error) {
 	if len(t) < 2 {
-		return mtid, fmt.Errorf("Not a valid TLV, lenght: %v", len(t))
+		return mtid, fmt.Errorf("not a valid TLV, lenght: %v", len(t))
 	}
 	switch binary.BigEndian.Uint16(t[0:2]) {
 	case 2:
@@ -70,41 +106,40 @@ func readPrefix(buf *bytes.Reader) (err error) {
 		return err
 	}
 	if buf.Len() <= 6 {
-		return fmt.Errorf("Not a valid Prefix, lenght: %v", buf.Len())
+		return fmt.Errorf("not a valid Prefix, lenght: %v", buf.Len())
 	}
 	var mask, flags, slen uint8
 	var metric uint32
 
 	err = binary.Read(buf, binary.BigEndian, &metric)
-	check(err, "Failed to read Metric: ")
+	check(err, "failed to read Metric: ")
 	err = binary.Read(buf, binary.BigEndian, &flags)
-	check(err, "Failed to read SubTLV: ")
+	check(err, "failed to read SubTLV: ")
 	err = binary.Read(buf, binary.BigEndian, &mask)
-	check(err, "Failed to read Mask: ")
+	check(err, "failed to read Mask: ")
 	prefix := make([]byte, mask/8)
 	err = binary.Read(buf, binary.BigEndian, &prefix)
-	check(err, "Failed to read Prefix: ")
+	check(err, "failed to read Prefix: ")
 	// Pad with additional bytes for IPv6 address compliance
 	pad := make([]byte, 16-mask/8)
 	prefix = append(prefix, pad...)
 
 	// Check if subtlv present flag is on
 	if flags&(1<<5) != 0 {
+		// TODO Process the sub-TLV
 		err = binary.Read(buf, binary.BigEndian, &slen)
 		subtlv := make([]byte, int(slen))
 		err = binary.Read(buf, binary.BigEndian, &subtlv)
-		check(err, "Failed to read subTLV: ")
+		check(err, "failed to read subTLV: ")
 	}
-
 	fmt.Printf("%v/%v, Metric:%v\n", net.IP(prefix), mask, metric)
 	err = readPrefix(buf)
-
 	return err
 }
 
 func readHeader(h []byte, n int) (buf *bytes.Reader, err error) {
 	if len(h) < 15 {
-		return buf, fmt.Errorf("Not a valid Header, lenght: %v", len(h))
+		return buf, fmt.Errorf("not a valid Header, lenght: %v", len(h))
 	}
 	fmt.Printf("===== LSP Details (lenght: %v) ====\n", n)
 	fmt.Printf("LSPID:      %X.%X.%X.%X-%X\n", h[0:2], h[2:4], h[4:6], h[6:8], h[8:10])
@@ -115,4 +150,40 @@ func readHeader(h []byte, n int) (buf *bytes.Reader, err error) {
 	// Get a io.Reader from a []byte slice
 	buf = bytes.NewReader(h[15:])
 	return buf, err
+}
+
+func exploreTLV(ts []tlv.TLV) error {
+	for _, tl := range ts {
+		switch tl.Type() {
+		case 1:
+			fmt.Printf("Type%03d,  L%03d: %x.%x.%x\n", tl.Type(), tl.Length(), tl.Value()[1:2], tl.Value()[2:4], tl.Value()[4:6])
+		case 137:
+			fmt.Printf("Type%03d,  L%03d: %s\n", tl.Type(), tl.Length(), tl.Value())
+		case 140, 232:
+			fmt.Printf("Type%03d,  L%03d: %v\n", tl.Type(), tl.Length(), net.IP(tl.Value()))
+		case 222:
+			fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
+			_, err := read222(tl.Value()[:tl.Length()])
+			if err != nil {
+				return errors.Wrap(err, "failed to read TLV 222")
+			}
+		case 237:
+			fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
+			_, err := read237(tl.Value()[:tl.Length()])
+			if err != nil {
+				return errors.Wrap(err, "failed to read TLV 237")
+			}
+		default:
+			fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
+		}
+	}
+	return nil
+}
+
+func decodeTelemetry(v interface{}, f string) error {
+	file, err := os.Open(f)
+	if err != nil {
+		return fmt.Errorf("could not open the file: %s; %v", f, err)
+	}
+	return json.NewDecoder(file).Decode(v)
 }

@@ -6,7 +6,19 @@ Disclaimer: At this point in time, it does not cover all the exiting TLV's, just
 
 ## Use
 
-`tlvdecode` reads from a base64 encoded [file](data64) and outputs the LSP details
+`tlvdecode` reads either from a base64 encoded [file](input/data64) or Telemetry IOS XR [message](input/full1.json) and outputs the LSP details.
+
+### Raw base64 LSP data
+
+- **Input**
+
+```console
+$cat input/data64
+AVECUAACAAAAAAANb0kDChE2qzGHORPLqjGVYAZIkTzGGQEGBUkAAAFigQGO5QIAAokWbXJzdG4tNTUwMi0yLmNpc2NvLmNvb
+<snip>
+```
+
+- **Output**
 
 ```console
 $ ./tlvdecode data64 
@@ -33,8 +45,59 @@ Prefixes:
 2001:f00:be::/64, Metric:65000
 ```
 
-## IS-IS Theory
+### Base64 LSP data inside a Telemetry message
 
+- **Input**
+
+```json
+{ "Source": "[2001:420:2cff:1204::5502:1]:36597",
+  "Telemetry": {...},
+    "Rows": [
+        {
+            "Timestamp": 1495073881691,
+            "Keys": {...},
+            "Content": {
+                "lsp_header_data": {...},
+                "lsp_body": "AVECUAABA..."
+            }
+        },
+        {
+            "Timestamp": 1495073881691,
+            "Keys": {...},
+            "Content": {
+                "lsp_header_data": {...},
+                "lsp_body": "AVECUAACAA..."
+            }
+        }
+    ]
+}
+```
+
+- **Output**
+
+```console
+$./tlvdecode full1.json
+===== LSP Details (lenght: 190) ====
+LSPID:      0151.0250.0001.0000-0000
+Seq Num:    0x01a1
+Checksum:   0x985f
+Type Block: 0x03
+===== TLV Details (total: 008) ====
+Type010,  L017: 0x365175ce39d3977ec4d48de0f6569df972
+Type001,  L006: 49.0000.0162
+<snip>
+===== LSP Details (lenght: 226) ====
+LSPID:      0151.0250.0002.0000-0000
+Seq Num:    0x000d
+Checksum:   0x6f49
+Type Block: 0x03
+===== TLV Details (total: 008) ====
+Type010,  L017: 0x36ab31873913cbaa3195600648913cc619
+Type001,  L006: 49.0000.0162
+<snip>
+```
+
+## IS-IS Theory
 
 ### TLV 1 (Area Address)
 
@@ -210,6 +273,8 @@ Described as a string in [Cisco-IOS-XR-types](https://github.com/YangModels/yang
 
 - [Intermediate System-to-Intermediate System (IS-IS) TLVs](http://www.cisco.com/c/en/us/support/docs/ip/integrated-intermediate-system-to-intermediate-system-is-is/5739-tlvs-5739.html)
 - [IS-IS TLV Codepoints](https://www.iana.org/assignments/isis-tlv-codepoints/isis-tlv-codepoints.xhtml)
+- RFC 1195: [Use of OSI IS-IS for Routing in TCP/IP and Dual Environments](https://tools.ietf.org/html/rfc1195)
+- RFC 3784: [IS-IS Extensions for Traffic Engineering (TE)](https://tools.ietf.org/html/rfc3784)
 - RFC 5120: [Multi Topology (MT) Routing in IS-ISs](https://tools.ietf.org/html/rfc5120)
 - RFC 5308: [Routing IPv6 with IS-IS](https://tools.ietf.org/html/rfc5308)
 - RFC 6119: [IPv6 Traffic Engineering in IS-IS](https://tools.ietf.org/html/rfc6119)
