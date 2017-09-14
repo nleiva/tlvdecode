@@ -1,8 +1,8 @@
 package main
 
-// Data represent the format of a
-// Cisco-IOS-XR-clns-isis-oper:isis/instances/instance/levels/level/detailed-lsps/detailed-lsp
-// message
+// Data represents the format of a Cisco-IOS-XR-clns-isis-oper
+// :isis/instances/instance/levels/level/detailed-lsps/detailed-lsp
+// message.
 type Data struct {
 	Rows []struct {
 		Content struct {

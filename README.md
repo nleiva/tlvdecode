@@ -1,26 +1,53 @@
 # Decoding IS-IS Link State PDUs (LSP)
 
-From [Package json](https://golang.org/pkg/encoding/json/) we learn _array and slice values encode as JSON arrays_, however _[]byte encodes as a **base64-encoded** string_. Therefore you might end up with a base64-encoded string in your JSON outputs. That was our case when reading IS-IS PDU's, therefore we used this code to translate it to a human readable format.
+From [Package json](https://golang.org/pkg/encoding/json/) we learn _array and slice values encode as JSON arrays_, however _[]byte encodes as a **base64-encoded** string_. Therefore you might end up with a base64-encoded string in your JSON outputs. That was our case when reading IS-IS PDU's from Telemetry streams, therefore we used this code to translate it to a human readable format.
 
 Disclaimer: At this point in time, it does not cover all the exiting TLV's, just those we found in our network. We will keep adding more on-demand.
 
 ## Use
 
-`tlvdecode` reads either from a base64 encoded [file](input/data64) or Telemetry IOS XR [message](input/full1.json) and outputs the LSP details.
+`tlvdecode` reads either from an IOS XR Telemetry [message](input/full1.json) (Cisco-IOS-XR-clns-isis-oper) or a base64 encoded [file](input/data64). It produces a Link Summary Table. It can also output the complete LSP details.
 
-### Raw base64 LSP data
+### Options
 
-- **Input**
+- Option -`f` points to the input file 
+- Option -`t` indicates whether to generate a table (`true`) or not (`false`, the default)
+
+#### Link Summary Table
 
 ```console
-$ cat input/data64
-AVECUAACAAAAAAANb0kDChE2qzGHORPLqj...
+$ ./tlvdecode -f input/full1.json -t true
++----------------+------------------------+----------------+--------+
+|    LOCAL ID    |        HOSTNAME        |   REMOTE ID    | METRIC |
++----------------+------------------------+----------------+--------+
+| 0151.0250.0001 | mrstn-5502-1.cisco.com | 0151.0250.0002 |     10 |
+| 0151.0250.0002 | mrstn-5502-2.cisco.com | 0151.0250.0001 |     10 |
++----------------+------------------------+----------------+--------+
 ```
 
-- **Output**
+#### LSP Details
 
 ```console
-$ ./tlvdecode data64 
+$ ./tlvdecode -f input/full1.json
+===== LSP Details (lenght: 190) ====
+LSPID:      0151.0250.0001.0000-0000
+Seq Num:    0x01a1
+Checksum:   0x985f
+Type Block: 0x03
+===== TLV Details (total: 008) ====
+Type010,  L017: 0x365175ce39d3977ec4d48de0f6569df972
+Type001,  L006: 49.0000.0162
+Type129,  L001: 0x8e
+Type229,  L002: 0x0002
+Type137,  L022: mrstn-5502-1.cisco.com
+Type232,  L016: 2001:558:2::1
+Type222,  L013: Neighbor System ID: 0151.0250.0002.00, Metric: 10
+Type237,  L082: MT ID: IPv6 Unicast
+Prefixes:
+2001:558:2::1/128, Metric:1
+2001:f00:ba::/64, Metric:10
+2001:f00:bb::/64, Metric:10
+2001:f00:bc::/64, Metric:10
 ===== LSP Details (lenght: 226) ====
 LSPID:      0151.0250.0002.0000-0000
 Seq Num:    0x000d
@@ -44,7 +71,45 @@ Prefixes:
 2001:f00:be::/64, Metric:65000
 ```
 
-### Base64 LSP data inside a Telemetry message
+### Inputs
+
+#### Raw base64 LSP data
+
+- **Input**
+
+```console
+$ cat input/data64
+AVECUAACAAAAAAANb0kDChE2qzGHORPLqj...
+```
+
+- **Output**
+
+```console
+$ ./tlvdecode -f input/data64
+===== LSP Details (lenght: 226) ====
+LSPID:      0151.0250.0002.0000-0000
+Seq Num:    0x000d
+Checksum:   0x6f49
+Type Block: 0x03
+===== TLV Details (total: 008) ====
+Type010,  L017: 0x36ab31873913cbaa3195600648913cc619
+Type001,  L006: 49.0000.0162
+Type129,  L001: 0x8e
+Type229,  L002: 0x0002
+Type137,  L022: mrstn-5502-2.cisco.com
+Type232,  L016: 2001:558:2::2
+Type222,  L013: Neighbor System ID: 0151.0250.0001.00, Metric: 10
+Type237,  L118: MT ID: IPv6 Unicast
+Prefixes:
+2001:558:2::2/128, Metric:1
+2001:f00:ba::/64, Metric:10
+2001:f00:bb::/64, Metric:10
+2001:f00:bc::/64, Metric:10
+2001:f00:bd::/64, Metric:65000
+2001:f00:be::/64, Metric:65000
+```
+
+#### Base64 LSP data inside a Telemetry message
 
 - **Input**
 
@@ -75,7 +140,7 @@ Prefixes:
 - **Output**
 
 ```console
-$ ./tlvdecode full1.json
+$ ./tlvdecode -f input/full1.json
 ===== LSP Details (lenght: 190) ====
 LSPID:      0151.0250.0001.0000-0000
 Seq Num:    0x01a1

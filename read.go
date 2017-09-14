@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func readBytes(src []byte) error {
+func readBytes(src []byte, d *entry, b *bool) error {
 	// Decode base64 data into bytes
 	var enc = base64.NewEncoding(encodeStd)
 	dst := make([]byte, enc.DecodedLen(len(src)))
@@ -22,7 +22,7 @@ func readBytes(src []byte) error {
 		return errors.Wrap(err, "error decoding file")
 	}
 	// Read PDU info
-	r, err := readHeader(dst, n)
+	r, err := readHeader(dst, n, d, b)
 	if err != nil {
 		return errors.Wrap(err, "error reading header")
 	}
@@ -34,15 +34,17 @@ func readBytes(src []byte) error {
 		return errors.Wrap(err, "failed to read TLVs: ")
 	}
 	// Print the TLV details
-	fmt.Printf("===== TLV Details (total: %03d) ====\n", tlvs.Length())
-	err = exploreTLV(tlvs.GetThemAll())
+	if !*b {
+		fmt.Printf("===== TLV Details (total: %03d) ====\n", tlvs.Length())
+	}
+	err = exploreTLV(tlvs.GetThemAll(), d, b)
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLV details: ")
 	}
 	return nil
 }
 
-func read222(t []byte) (mtid string, err error) {
+func read222(t []byte, d *entry, b *bool) (mtid string, err error) {
 	if len(t) < 13 {
 		return mtid, fmt.Errorf("not a valid TLV, lenght: %v", len(t))
 	}
@@ -71,12 +73,18 @@ func read222(t []byte) (mtid string, err error) {
 		mtid = "Unknown"
 	}
 	// Metric has three bytes
-	metric := uint32(m[0])*65536 + uint32(m[1])*256 + uint32(m[2])
+	met := uint32(m[0])*65536 + uint32(m[1])*256 + uint32(m[2])
 	// Format the System ID
 	sysid := fmt.Sprintf("%x", (s[0:2])) + "." + fmt.Sprintf("%x", (s[2:4])) + "." + fmt.Sprintf("%x", (s[4:6]))
 
-	// This is just temporary
-	fmt.Printf("Neighbor System ID: %v.%02d, Metric: %v\n", sysid, nsel, metric)
+	n := neighbor{
+		remoteID: sysid,
+		metric:   met,
+	}
+	d.neighbors = append(d.neighbors, n)
+	if !*b {
+		fmt.Printf("Neighbor System ID: %v.%02d, Metric: %v\n", sysid, nsel, met)
+	}
 	if subtlv != 0 {
 		// TODO Process the sub-TLV
 		// return mtid, fmt.Errorf("missed a subTLV")
@@ -84,7 +92,7 @@ func read222(t []byte) (mtid string, err error) {
 	return mtid, err
 }
 
-func read237(t []byte) (mtid string, err error) {
+func read237(t []byte, d *entry, b *bool) (mtid string, err error) {
 	if len(t) < 2 {
 		return mtid, fmt.Errorf("not a valid TLV, lenght: %v", len(t))
 	}
@@ -94,14 +102,15 @@ func read237(t []byte) (mtid string, err error) {
 	default:
 		mtid = "Unknown"
 	}
-	// This is just temporary
-	fmt.Printf("MT ID: %v\nPrefixes:\n", mtid)
+	if !*b {
+		fmt.Printf("MT ID: %v\nPrefixes:\n", mtid)
+	}
 
-	err = readPrefix(bytes.NewReader(t[2:]))
+	err = readPrefix(bytes.NewReader(t[2:]), b)
 	return mtid, err
 }
 
-func readPrefix(buf *bytes.Reader) (err error) {
+func readPrefix(buf *bytes.Reader, b *bool) (err error) {
 	if buf.Len() == 0 {
 		return err
 	}
@@ -132,49 +141,69 @@ func readPrefix(buf *bytes.Reader) (err error) {
 		err = binary.Read(buf, binary.BigEndian, &subtlv)
 		check(err, "failed to read subTLV: ")
 	}
-	fmt.Printf("%v/%v, Metric:%v\n", net.IP(prefix), mask, metric)
-	err = readPrefix(buf)
+	if !*b {
+		fmt.Printf("%v/%v, Metric:%v\n", net.IP(prefix), mask, metric)
+	}
+	err = readPrefix(buf, b)
 	return err
 }
 
-func readHeader(h []byte, n int) (buf *bytes.Reader, err error) {
+func readHeader(h []byte, n int, d *entry, b *bool) (buf *bytes.Reader, err error) {
 	if len(h) < 15 {
 		return buf, fmt.Errorf("not a valid Header, lenght: %v", len(h))
 	}
-	fmt.Printf("===== LSP Details (lenght: %v) ====\n", n)
-	fmt.Printf("LSPID:      %X.%X.%X.%X-%X\n", h[0:2], h[2:4], h[4:6], h[6:8], h[8:10])
-	fmt.Printf("Seq Num:    %#x\n", h[10:12])
-	fmt.Printf("Checksum:   %#x\n", h[12:14])
-	fmt.Printf("Type Block: %#x\n", h[14:15])
-
+	sysid := fmt.Sprintf("%x", (h[0:2])) + "." + fmt.Sprintf("%x", (h[2:4])) + "." + fmt.Sprintf("%x", (h[4:6]))
+	d.localID = sysid
+	if !*b {
+		fmt.Printf("===== LSP Details (lenght: %v) ====\n", n)
+		fmt.Printf("LSPID:      %s.%x-%x\n", sysid, h[6:8], h[8:10])
+		fmt.Printf("Seq Num:    %#x\n", h[10:12])
+		fmt.Printf("Checksum:   %#x\n", h[12:14])
+		fmt.Printf("Type Block: %#x\n", h[14:15])
+	}
 	// Get a io.Reader from a []byte slice
 	buf = bytes.NewReader(h[15:])
 	return buf, err
 }
 
-func exploreTLV(ts []tlv.TLV) error {
+func exploreTLV(ts []tlv.TLV, d *entry, b *bool) error {
 	for _, tl := range ts {
 		switch tl.Type() {
 		case 1:
-			fmt.Printf("Type%03d,  L%03d: %x.%x.%x\n", tl.Type(), tl.Length(), tl.Value()[1:2], tl.Value()[2:4], tl.Value()[4:6])
+			a := fmt.Sprintf("%x.%x.%x", tl.Value()[1:2], tl.Value()[2:4], tl.Value()[4:6])
+			d.area = a
+			if !*b {
+				fmt.Printf("Type%03d,  L%03d: %s\n", tl.Type(), tl.Length(), a)
+			}
 		case 137:
-			fmt.Printf("Type%03d,  L%03d: %s\n", tl.Type(), tl.Length(), tl.Value())
+			d.hostname = string(tl.Value())
+			if !*b {
+				fmt.Printf("Type%03d,  L%03d: %s\n", tl.Type(), tl.Length(), tl.Value())
+			}
 		case 140, 232:
-			fmt.Printf("Type%03d,  L%03d: %v\n", tl.Type(), tl.Length(), net.IP(tl.Value()))
+			if !*b {
+				fmt.Printf("Type%03d,  L%03d: %v\n", tl.Type(), tl.Length(), net.IP(tl.Value()))
+			}
 		case 222:
-			fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
-			_, err := read222(tl.Value()[:tl.Length()])
+			if !*b {
+				fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
+			}
+			_, err := read222(tl.Value()[:tl.Length()], d, b)
 			if err != nil {
 				return errors.Wrap(err, "failed to read TLV 222")
 			}
 		case 237:
-			fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
-			_, err := read237(tl.Value()[:tl.Length()])
+			if !*b {
+				fmt.Printf("Type%03d,  L%03d: ", tl.Type(), tl.Length())
+			}
+			_, err := read237(tl.Value()[:tl.Length()], d, b)
 			if err != nil {
 				return errors.Wrap(err, "failed to read TLV 237")
 			}
 		default:
-			fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
+			if !*b {
+				fmt.Printf("Type%03d,  L%03d: %#x\n", tl.Type(), tl.Length(), tl.Value())
+			}
 		}
 	}
 	return nil
