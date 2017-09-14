@@ -13,9 +13,8 @@ Disclaimer: At this point in time, it does not cover all the exiting TLV's, just
 - **Input**
 
 ```console
-$cat input/data64
-AVECUAACAAAAAAANb0kDChE2qzGHORPLqjGVYAZIkTzGGQEGBUkAAAFigQGO5QIAAokWbXJzdG4tNTUwMi0yLmNpc2NvLmNvb
-<snip>
+$ cat input/data64
+AVECUAACAAAAAAANb0kDChE2qzGHORPLqj...
 ```
 
 - **Output**
@@ -51,21 +50,21 @@ Prefixes:
 
 ```json
 { "Source": "[2001:420:2cff:1204::5502:1]:36597",
-  "Telemetry": {...},
+  "Telemetry": {"..."},
     "Rows": [
         {
             "Timestamp": 1495073881691,
-            "Keys": {...},
+            "Keys": {"..."},
             "Content": {
-                "lsp_header_data": {...},
+                "lsp_header_data": {"..."},
                 "lsp_body": "AVECUAABA..."
             }
         },
         {
             "Timestamp": 1495073881691,
-            "Keys": {...},
+            "Keys": {"..."},
             "Content": {
-                "lsp_header_data": {...},
+                "lsp_header_data": {"..."},
                 "lsp_body": "AVECUAACAA..."
             }
         }
@@ -76,7 +75,7 @@ Prefixes:
 - **Output**
 
 ```console
-$./tlvdecode full1.json
+$ ./tlvdecode full1.json
 ===== LSP Details (lenght: 190) ====
 LSPID:      0151.0250.0001.0000-0000
 Seq Num:    0x01a1
